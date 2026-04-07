@@ -18,10 +18,12 @@
             background-color: #0a0a0f;
         }
 
-        /* 🌌 固定全屏大背景 (pic1.png) */
+        /* 🌌 双层场景画布 */
         #bg-image {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3;
-            background: url('./character/pic1.png') center/cover;
+            background: url('./character/scene1.png') center/cover;
+            opacity: 0; 
+            transition: background 0.8s ease-in-out;
         }
         
         #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; }
@@ -48,6 +50,8 @@
         .btn-good:hover { background-color: #2ecc71; color: black; box-shadow: 0 0 20px #2ecc71; border-color: #2ecc71; }
         .btn-bad:hover { background-color: #e74c3c; color: black; box-shadow: 0 0 20px #e74c3c; border-color: #e74c3c; }
 
+        #visual-bg { transition: background 1.5s ease; background-size: cover; background-position: center; }
+        
         /* 隐藏滚动条但保留滚动功能 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -70,7 +74,7 @@
         </button>
     </div>
 
-    <div id="vn-container" class="w-full max-w-5xl h-[80vh] border border-gray-600/50 bg-gray-900/85 backdrop-blur-md relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.9)] rounded-xl flex flex-col opacity-0 z-10">
+    <div id="vn-container" class="w-full max-w-5xl h-[80vh] border border-gray-600/50 bg-gray-900/85 backdrop-blur-md relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.9)] rounded-xl flex flex-col opacity-0 z-10 transition-shadow duration-1000">
         <div class="scanlines"></div>
 
         <div class="h-14 bg-black/60 border-b border-gray-700/50 flex items-center justify-start px-6 z-30 overflow-x-auto whitespace-nowrap no-scrollbar relative">
@@ -92,14 +96,13 @@
         </div>
 
         <div id="visual-bg" class="flex-1 relative flex items-end justify-center pb-4">
-            <div id="scene-layer" class="absolute inset-0 bg-cover bg-center opacity-0 z-0"></div>
-            
+            <div id="scene-layer" class="absolute inset-0 bg-cover bg-center opacity-0 z-0 transition-opacity duration-500"></div>
             <div id="character-stage" class="absolute bottom-10 left-4 right-4 flex justify-center gap-2 md:gap-4 z-10 flex-wrap"></div>
         </div>
 
-        <div class="h-[35%] bg-black/80 border-t border-gray-700/80 p-6 md:p-8 z-30 relative backdrop-blur-lg">
+        <div class="h-[40%] md:h-[35%] bg-black/80 border-t border-gray-700/80 p-6 md:p-8 z-30 relative backdrop-blur-lg flex flex-col">
             <div id="speaker-name" class="absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded shadow-[0_0_15px_rgba(147,51,234,0.6)] border hidden"></div>
-            <div id="dialogue-text" class="text-sm md:text-base leading-relaxed text-gray-200 tracking-wide mt-2 relative z-10"></div>
+            <div id="dialogue-text" class="text-sm md:text-base leading-relaxed text-gray-200 tracking-wide mt-2 relative z-10 flex-1"></div>
             
             <div id="choices-container" class="hidden grid-cols-1 md:grid-cols-2 gap-4 mt-6 relative z-20">
                 <button onclick="makeChoice('good')" class="choice-btn btn-good border border-gray-500 bg-gray-800/80 text-white px-4 md:px-6 py-3 rounded-lg font-bold text-sm md:text-base text-left backdrop-blur-md">
@@ -107,6 +110,12 @@
                 </button>
                 <button onclick="makeChoice('bad')" class="choice-btn btn-bad border border-gray-500 bg-gray-800/80 text-white px-4 md:px-6 py-3 rounded-lg font-bold text-sm md:text-base text-left backdrop-blur-md">
                     <i class="fas fa-bomb mr-3 text-red-400"></i>炸毁星门通道 (封闭尘界孤岛)
+                </button>
+            </div>
+
+            <div id="restart-container" class="hidden mt-4 flex justify-end relative z-20">
+                <button onclick="returnToChoices()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-md font-bold text-sm transition-all border border-gray-600 shadow-[0_0_10px_rgba(0,0,0,0.5)] hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                    <i class="fas fa-undo-alt mr-2"></i>重新选择命运
                 </button>
             </div>
         </div>
@@ -166,7 +175,6 @@
 
             function animate() {
                 bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-                // 覆盖一层半透明黑底，让背景不那么刺眼
                 bgCtx.fillStyle = 'rgba(10, 10, 15, 0.7)'; 
                 bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
@@ -276,7 +284,7 @@
             animate();
         }
 
-        // --- 📖 视觉小说：剧本与图库 ---
+        // --- 📖 视觉小说剧本与图库 ---
         const chars = {
             system: { name: '系统记录', color: 'bg-gray-600 border-gray-400' },
             mike: { name: 'Mike', img: './character/pic2.png', color: 'border-blue-500 shadow-blue-500' },
@@ -370,7 +378,6 @@
             currentNode = index;
             const node = storyNodes[index];
 
-            // 🌟 将场景图片固定在 #scene-layer 中 (锁在框框里) 🌟
             const sceneLayer = document.getElementById('scene-layer');
 
             gsap.to(sceneLayer, {
@@ -426,55 +433,20 @@
             clearInterval(typeInterval);
             
             let charIndex = 0;
-            typeInterval = setInterval(() => {
-                if(charIndex < node.text.length) {
-                    textContainer.innerHTML = node.text.substring(0, charIndex + 1).replace(/\n/g, '<br>');
-                    charIndex++;
+            // ★ 修改了 typeWriter，支持回调函数
+            typeWriter(textContainer, node.text, () => {
+                if(node.showChoices) {
+                    document.getElementById('choices-container').classList.remove('hidden');
+                    document.getElementById('choices-container').classList.add('grid');
+                    gsap.from(".choice-btn", { y: 20, opacity: 0, duration: 0.5, stagger: 0.2 });
                 } else {
-                    clearInterval(typeInterval);
-                    textContainer.classList.remove('cursor');
-                    
-                    if(node.showChoices) {
-                        document.getElementById('choices-container').classList.remove('hidden');
-                        document.getElementById('choices-container').classList.add('grid');
-                        gsap.from(".choice-btn", { y: 20, opacity: 0, duration: 0.5, stagger: 0.2 });
-                    } else {
-                        setTimeout(() => playNode(currentNode + 1), 6000); 
-                    }
+                    setTimeout(() => playNode(currentNode + 1), 6000); 
                 }
-            }, 45); 
+            });
         }
 
-        function makeChoice(type) {
-            document.getElementById('choices-container').classList.add('hidden');
-            document.getElementById('vn-container').classList.remove('shake-active');
-            document.getElementById('character-stage').innerHTML = ''; 
-            
-            const textContainer = document.getElementById('dialogue-text');
-            const speakerBox = document.getElementById('speaker-name');
-            const sceneLayer = document.getElementById('scene-layer');
-            
-            gsap.to(sceneLayer, { opacity: 0, duration: 0.5, onComplete: () => {
-                if (type === 'good') {
-                    // ✅ 触发好结局
-                    sceneLayer.style.backgroundImage = "url('./character/end_good.png')";
-                    speakerBox.className = "absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded bg-green-700 border border-green-400 shadow-[0_0_15px_rgba(46,204,113,0.8)]";
-                    speakerBox.innerText = "结局达成";
-                    typeWriter(textContainer, "【真结局：多元宇宙共生】\n\n你启动了绿晶阵列！生命树脂与本源晶石的光芒瞬间中和了暗晶的腐蚀。暗晶军团被感化，首领 Dark 宣布投降。战后，星核尘界帮助暗晶神域稳定了能源，三个平行世界签订了共生盟约。星门成为了多元宇宙交流的桥梁，文明迎来了真正的黎明！");
-                    document.getElementById('vn-container').style.boxShadow = "0 0 50px rgba(46, 204, 113, 0.4)";
-                } else {
-                    // ❌ 触发坏结局
-                    sceneLayer.style.backgroundImage = "url('./character/end_bad.png')";
-                    speakerBox.className = "absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded bg-red-800 border border-red-500 shadow-[0_0_15px_rgba(231,76,60,0.8)]";
-                    speakerBox.innerText = "孤立结局";
-                    typeWriter(textContainer, "【坏结局：尘界的孤岛】\n\n你选择了炸毁星门切断连接！强烈的时空坍塌将暗晶军团永远挡在了门外，但也彻底摧毁了探索平行宇宙的希望。能源枯竭的阴影依然笼罩着星核尘界，文明在孤立无援中，慢慢步入不可逆转的衰亡深渊...");
-                    document.getElementById('vn-container').style.boxShadow = "0 0 50px rgba(231, 76, 60, 0.4)";
-                }
-                gsap.to(sceneLayer, { opacity: 1, duration: 0.5 });
-            }});
-        }
-
-        function typeWriter(element, text) {
+        // 🌟 打字机函数 (修改版：支持播放结束后执行动作)
+        function typeWriter(element, text, onComplete) {
             element.innerHTML = '';
             element.classList.add('cursor');
             let i = 0;
@@ -485,8 +457,104 @@
                 } else {
                     clearInterval(interval);
                     element.classList.remove('cursor');
+                    if (onComplete) onComplete(); // 文字打完后执行回调
                 }
             }, 45);
+        }
+
+        function makeChoice(type) {
+            document.getElementById('choices-container').classList.add('hidden');
+            document.getElementById('vn-container').classList.remove('shake-active');
+            document.getElementById('character-stage').innerHTML = ''; 
+            
+            const textContainer = document.getElementById('dialogue-text');
+            const speakerBox = document.getElementById('speaker-name');
+            const sceneLayer = document.getElementById('scene-layer');
+            const vnContainer = document.getElementById('vn-container');
+            
+            gsap.to(sceneLayer, { opacity: 0, duration: 0.5, onComplete: () => {
+                if (type === 'good') {
+                    sceneLayer.style.backgroundImage = "url('./character/end_good.png')";
+                    document.getElementById('visual-bg').style.background = "radial-gradient(circle at center, rgba(46,204,113,0.5) 0%, transparent 90%)";
+                    speakerBox.className = "absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded bg-green-700 border border-green-400 shadow-[0_0_15px_rgba(46,204,113,0.8)]";
+                    speakerBox.innerText = "结局达成";
+                    vnContainer.style.boxShadow = "0 0 50px rgba(46, 204, 113, 0.4)";
+                    
+                    // 文字播放完毕后，显示重新选择按钮
+                    typeWriter(textContainer, "【真结局：多元宇宙共生】\n\n你启动了绿晶阵列！生命树脂与本源晶石的光芒瞬间中和了暗晶的腐蚀。暗晶军团被感化，首领 Dark 宣布投降。战后，星核尘界帮助暗晶神域稳定了能源，三个平行世界签订了共生盟约。星门成为了多元宇宙交流的桥梁，文明迎来了真正的黎明！", () => {
+                        document.getElementById('restart-container').classList.remove('hidden');
+                    });
+                } else {
+                    sceneLayer.style.backgroundImage = "url('./character/end_bad.png')";
+                    document.getElementById('visual-bg').style.background = "radial-gradient(circle at center, rgba(231,76,60,0.5) 0%, transparent 90%)";
+                    speakerBox.className = "absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded bg-red-800 border border-red-500 shadow-[0_0_15px_rgba(231,76,60,0.8)]";
+                    speakerBox.innerText = "孤立结局";
+                    vnContainer.style.boxShadow = "0 0 50px rgba(231, 76, 60, 0.4)";
+                    
+                    // 文字播放完毕后，显示重新选择按钮
+                    typeWriter(textContainer, "【坏结局：尘界的孤岛】\n\n你选择了炸毁星门切断连接！强烈的时空坍塌将暗晶军团永远挡在了门外，但也彻底摧毁了探索平行宇宙的希望。能源枯竭的阴影依然笼罩着星核尘界，文明在孤立无援中，慢慢步入不可逆转的衰亡深渊...", () => {
+                        document.getElementById('restart-container').classList.remove('hidden');
+                    });
+                }
+                gsap.to(sceneLayer, { opacity: 1, duration: 0.5 });
+            }});
+        }
+
+        // 🌟 新增功能：时光倒流，返回第8章抉择时刻
+        function returnToChoices() {
+            // 隐藏返回按钮
+            document.getElementById('restart-container').classList.add('hidden');
+            
+            // 重新载入第8章的数据 (数组索引为 7)
+            const node = storyNodes[7];
+            currentNode = 7;
+            
+            const sceneLayer = document.getElementById('scene-layer');
+            const speakerBox = document.getElementById('speaker-name');
+            const textContainer = document.getElementById('dialogue-text');
+            const vnContainer = document.getElementById('vn-container');
+
+            // 还原背景与状态
+            gsap.to(sceneLayer, { opacity: 0, duration: 0.5, onComplete: () => {
+                sceneLayer.style.backgroundImage = `url('${node.scene}')`;
+                document.getElementById('visual-bg').style.background = "transparent";
+                vnContainer.style.boxShadow = "0 0 50px rgba(0,0,0,0.9)"; // 还原边框阴影
+
+                // 还原说话者
+                speakerBox.className = `absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded shadow-[0_0_15px_rgba(0,0,0,0.5)] border ${node.speaker.color}`;
+                speakerBox.innerText = node.speaker.name;
+
+                // 重新打字提示文字，打完后展示选项
+                typeWriter(textContainer, node.text, () => {
+                    document.getElementById('choices-container').classList.remove('hidden');
+                    document.getElementById('choices-container').classList.add('grid');
+                    gsap.from(".choice-btn", { y: 20, opacity: 0, duration: 0.5, stagger: 0.2 });
+                });
+
+                gsap.to(sceneLayer, { opacity: 1, duration: 0.5 });
+            }});
+
+            // 重新让 Ember 出场
+            const stage = document.getElementById('character-stage');
+            stage.innerHTML = '';
+            node.characters.forEach((c, idx) => {
+                let card = document.createElement('div');
+                card.className = `bg-gray-900/90 backdrop-blur-md border-2 ${c.color} p-2 md:p-3 rounded-xl flex flex-col items-center justify-center w-24 md:w-32 shadow-[0_0_15px_rgba(0,0,0,0.5)] transform translate-y-20 opacity-0`;
+                card.innerHTML = `
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-800 mb-2 border-2 ${c.color} overflow-hidden shadow-[0_0_10px_currentColor] flex items-center justify-center">
+                        <img src="${c.img}" alt="${c.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" class="w-full h-full object-cover">
+                        <i class="fas fa-image text-gray-600 text-2xl hidden"></i>
+                    </div>
+                    <div class="text-[11px] md:text-sm font-bold text-white text-center">${c.name}</div>
+                `;
+                stage.appendChild(card);
+                gsap.to(card, { y: 0, opacity: 1, duration: 0.8, delay: idx * 0.3, ease: "back.out(1.5)" });
+            });
+
+            // 还原震动
+            if(node.shake) {
+                vnContainer.classList.add('shake-active');
+            }
         }
     </script>
 </body>
