@@ -3,126 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星核尘界：平行穿越录 - 终极决战</title>
+    <title>晶核尘界 - 平行穿越录</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
         
-        body { 
-            font-family: 'Courier New', 'Noto Sans SC', monospace; 
-            margin: 0; 
-            overflow: hidden; 
-            background-color: #0a0a0f;
-        }
-
-        /* 🌌 双层场景画布 */
-        #bg-image {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3;
-            background: url('./character/scene1.png') center/cover;
-            opacity: 0; 
-            transition: background 0.8s ease-in-out;
+        :root {
+            --dark-bg: #0a0a0f;
+            --crystal-purple: #9b59b6;
+            --crystal-green: #2ecc71;
+            --crystal-blue: #3498db;
+            --crystal-red: #e74c3c;
+            --crystal-yellow: #f1c40f;
         }
         
-        #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; }
-
-        .scanlines {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
-            background-size: 100% 4px; z-index: 20; pointer-events: none;
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--dark-bg);
+            color: #f1f5f9;
+            overflow-x: hidden;
+            background: none; 
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translate(1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
+        .timeline-item::before, .timeline-item::after { display: none !important; }
+
+        /* 底层星空画布样式 */
+        #starfield {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2; background: var(--dark-bg); 
         }
-        .shake-active { animation: shake 0.5s infinite; }
 
-        .cursor::after { content: '█'; animation: blink 1s infinite; color: #fff; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        /* 纯 CSS 按钮入场动画 */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .btn-anim-1 { animation: fadeInUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; animation-delay: 0.5s; }
+        .btn-anim-2 { animation: fadeInUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; animation-delay: 0.7s; }
+        .btn-anim-3 { animation: fadeInUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; animation-delay: 0.9s; }
 
-        .choice-btn { transition: all 0.3s ease; }
-        .choice-btn:hover { transform: scale(1.02); }
-        .btn-good:hover { background-color: #2ecc71; color: black; box-shadow: 0 0 20px #2ecc71; border-color: #2ecc71; }
-        .btn-bad:hover { background-color: #e74c3c; color: black; box-shadow: 0 0 20px #e74c3c; border-color: #e74c3c; }
-
-        #visual-bg { transition: background 1.5s ease; background-size: cover; background-position: center; }
+        /* 卡片悬停特效 */
+        .dynamic-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .dynamic-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            border-color: rgba(255,255,255,0.3);
+            z-index: 30;
+        }
         
-        /* 隐藏滚动条但保留滚动功能 */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .img-zoom-container { overflow: hidden; }
+        .img-zoom-container img { transition: transform 0.7s ease; }
+        .dynamic-card:hover .img-zoom-container img { transform: scale(1.15); }
+
+        .timeline-gradient { background: linear-gradient(to bottom, #a855f7 0%, #eab308 33%, #3b82f6 66%, #22c55e 100%); }
+
+        .hero-section {
+            position: relative; 
+            min-height: 100vh; 
+            overflow: hidden;
+            background: rgba(10, 10, 15, 0.3); 
+        }
+        
+        .parallax-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 120%;
+            /* 🔗 替换为本地背景图片 (pic1) */
+            background: linear-gradient(to bottom, rgba(10,10,15,0.3), rgba(10,10,15,0.9)), url('character/pic1.png');
+            background-size: cover; background-position: center; z-index: -1;
+            will-change: transform; 
+        }
     </style>
 </head>
-<body class="text-gray-200 h-screen w-screen flex flex-col items-center justify-center relative">
+<body>
 
-    <div id="bg-image"></div>
     <canvas id="starfield"></canvas>
+    
     <canvas id="trailfield" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; pointer-events: none;"></canvas>
 
-    <a href="index.html" class="absolute top-4 left-4 z-50 text-gray-400 hover:text-white transition duration-300 backdrop-blur-md bg-black/30 px-4 py-2 rounded-full border border-white/10">
-        <i class="fas fa-arrow-left mr-2"></i>返回星核中枢
-    </a>
-
-    <div id="start-overlay" class="absolute inset-0 bg-black/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity duration-1000">
-        <i class="fas fa-dungeon text-6xl text-purple-500 mb-6 animate-pulse drop-shadow-[0_0_15px_rgba(168,85,247,0.8)]"></i>
-        <button onclick="startVisualNovel()" class="px-8 py-4 bg-purple-700 hover:bg-purple-600 text-white font-bold text-xl rounded-md tracking-widest shadow-[0_0_20px_rgba(147,51,234,0.6)] transition-all transform hover:scale-105 border border-purple-400">
-            跨越星门 [START]
-        </button>
-    </div>
-
-    <div id="vn-container" class="w-full max-w-5xl h-[80vh] border border-gray-600/50 bg-gray-900/85 backdrop-blur-md relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.9)] rounded-xl flex flex-col opacity-0 z-10 transition-shadow duration-1000">
-        <div class="scanlines"></div>
-
-        <div class="h-14 bg-black/60 border-b border-gray-700/50 flex items-center justify-start px-6 z-30 overflow-x-auto whitespace-nowrap no-scrollbar relative">
-            <div class="text-xs font-bold text-gray-400 transition-all flex-shrink-0" id="tl-1"><i class="fas fa-circle text-[10px] mr-1"></i>1. 星门启航</div>
-            <div class="w-4 md:w-6 h-px bg-gray-700 mx-2 flex-shrink-0"></div>
-            <div class="text-xs font-bold text-gray-600 transition-all flex-shrink-0" id="tl-2"><i class="fas fa-circle text-[10px] mr-1"></i>2. 赤岩废土</div>
-            <div class="w-4 md:w-6 h-px bg-gray-700 mx-2 flex-shrink-0"></div>
-            <div class="text-xs font-bold text-gray-600 transition-all flex-shrink-0" id="tl-3"><i class="fas fa-circle text-[10px] mr-1"></i>3. 废土警告</div>
-            <div class="w-4 md:w-6 h-px bg-gray-700 mx-2 flex-shrink-0"></div>
-            <div class="text-xs font-bold text-gray-600 transition-all flex-shrink-0" id="tl-4"><i class="fas fa-circle text-[10px] mr-1"></i>4. 绿境结盟</div>
-            <div class="w-4 md:w-6 h-px bg-gray-700 mx-2 flex-shrink-0"></div>
-            <div class="text-xs font-bold text-gray-600 transition-all flex-shrink-0" id="tl-5"><i class="fas fa-circle text-[10px] mr-1"></i>5. 暗晶威胁</div>
-            <div class="w-4 md:w-6 h-px bg-gray-700 mx-2 flex-shrink-0"></div>
-            <div class="text-xs font-bold text-gray-600 transition-all flex-shrink-0" id="tl-6"><i class="fas fa-circle text-[10px] mr-1"></i>6. 军团突袭</div>
-            <div class="w-4 md:w-6 h-px bg-gray-700 mx-2 flex-shrink-0"></div>
-            <div class="text-xs font-bold text-gray-600 transition-all flex-shrink-0" id="tl-7"><i class="fas fa-circle text-[10px] mr-1"></i>7. 绿晶希望</div>
-            <div class="w-4 md:w-6 h-px bg-gray-700 mx-2 flex-shrink-0"></div>
-            <div class="text-xs font-bold text-gray-600 transition-all flex-shrink-0" id="tl-8"><i class="fas fa-circle text-[10px] mr-1"></i>8. 终极抉择</div>
-        </div>
-
-        <div id="visual-bg" class="flex-1 relative flex items-end justify-center pb-4">
-            <div id="scene-layer" class="absolute inset-0 bg-cover bg-center opacity-0 z-0 transition-opacity duration-500"></div>
-            <div id="character-stage" class="absolute bottom-10 left-4 right-4 flex justify-center gap-2 md:gap-4 z-10 flex-wrap"></div>
-        </div>
-
-        <div class="h-[40%] md:h-[35%] bg-black/80 border-t border-gray-700/80 p-6 md:p-8 z-30 relative backdrop-blur-lg flex flex-col">
-            <div id="speaker-name" class="absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded shadow-[0_0_15px_rgba(147,51,234,0.6)] border hidden"></div>
-            <div id="dialogue-text" class="text-sm md:text-base leading-relaxed text-gray-200 tracking-wide mt-2 relative z-10 flex-1"></div>
+    <header class="fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10 transition-all duration-300">
+        <div class="w-full px-6 md:px-12 py-4 flex justify-between items-center">
+            <a href="#home" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-full bg-purple-700 flex items-center justify-center shadow-[0_0_15px_#9b59b6] group-hover:rotate-180 transition-transform duration-500">
+                    <i class="fas fa-crystal text-white"></i>
+                </div>
+                <span class="text-xl font-bold tracking-widest">晶核尘界</span>
+            </a>
             
-            <div id="choices-container" class="hidden grid-cols-1 md:grid-cols-2 gap-4 mt-6 relative z-20">
-                <button onclick="makeChoice('good')" class="choice-btn btn-good border border-gray-500 bg-gray-800/80 text-white px-4 md:px-6 py-3 rounded-lg font-bold text-sm md:text-base text-left backdrop-blur-md">
-                    <i class="fas fa-shield-alt mr-3 text-green-400"></i>启动绿晶阵列 (缔结共生盟约)
-                </button>
-                <button onclick="makeChoice('bad')" class="choice-btn btn-bad border border-gray-500 bg-gray-800/80 text-white px-4 md:px-6 py-3 rounded-lg font-bold text-sm md:text-base text-left backdrop-blur-md">
-                    <i class="fas fa-bomb mr-3 text-red-400"></i>炸毁星门通道 (封闭尘界孤岛)
-                </button>
-            </div>
+            <nav class="hidden md:flex space-x-8 items-center">
+                <a href="#worldview" class="text-gray-300 hover:text-purple-400 transition">探索世界观</a>
+                <a href="#characters" class="text-gray-300 hover:text-blue-400 transition">认识角色</a>
+                <a href="#timeline" class="text-gray-300 hover:text-yellow-400 transition">大事件坐标</a>
+                <a href="flora_awakening.html" class="px-5 py-2 bg-green-600 hover:bg-green-500 text-white rounded font-bold transition shadow-[0_0_15px_#2ecc71]">互动游戏</a>
+            </nav>
+        </div>
+    </header>
 
-            <div id="restart-container" class="hidden mt-4 flex justify-end relative z-20">
-                <button onclick="returnToChoices()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-md font-bold text-sm transition-all border border-gray-600 shadow-[0_0_10px_rgba(0,0,0,0.5)] hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-                    <i class="fas fa-undo-alt mr-2"></i>重新选择命运
-                </button>
+    <section id="home" class="hero-section flex flex-col justify-center items-center text-center pt-24 pb-10">
+        <div class="parallax-bg"></div>
+        <div class="relative z-10 container mx-auto px-4 flex flex-col items-center">
+            <h1 class="text-5xl md:text-7xl font-bold mb-2 tracking-tight title-anim drop-shadow-2xl">
+                <span>晶核尘界</span><br>
+                <span class="text-purple-400 text-4xl md:text-5xl mt-2 inline-block">平行穿越录</span>
+            </h1>
+            
+            <p class="text-base md:text-lg max-w-3xl mx-auto mb-8 text-gray-200 title-anim drop-shadow-md leading-relaxed">
+                自“星蚀”灾难过后，蕴含时空经纬的本源晶石成为了文明的基石。如今，第一座“星门”在中枢落成，跨越平行宇宙的探索正式启航，寻找拯救枯竭世界的终极答案。
+            </p>
+
+            <div class="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-6">
+                <a href="#worldview" class="btn-anim-1 w-56 py-3.5 bg-purple-700 hover:bg-purple-600 text-white rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(147,51,234,0.6)] hover:scale-105 font-bold text-lg flex items-center justify-center border border-purple-400">
+                    <i class="fas fa-globe mr-3"></i>探索世界观
+                </a>
+                
+                <a href="#characters" class="btn-anim-2 w-56 py-3.5 bg-blue-700 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(59,130,246,0.6)] hover:scale-105 font-bold text-lg flex items-center justify-center border border-blue-400">
+                    <i class="fas fa-users mr-3"></i>认识角色
+                </a>
+                
+                <a href="flora_awakening.html" class="btn-anim-3 w-56 py-3.5 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(46,204,113,0.6)] hover:scale-105 font-bold text-lg flex items-center justify-center border border-green-400">
+                    <i class="fas fa-gamepad mr-3"></i>互动游戏
+                </a>
+            </div>
+            
+            <div class="mt-12 animate-bounce title-anim" style="animation-delay: 1.5s;">
+                <a href="#worldview" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-chevron-down text-3xl"></i>
+                </a>
             </div>
         </div>
-    </div>
+    </section>
+
+    <section id="worldview" class="py-24 relative z-10">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-4xl font-bold mb-4">探索世界观</h2>
+            <div class="w-24 h-1 bg-purple-600 mx-auto mb-12"></div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div class="dynamic-card p-8 rounded-lg border-t-4 border-purple-500 gs-reveal">
+                    <i class="fas fa-dungeon text-4xl text-purple-400 mb-4"></i>
+                    <h3 class="text-xl font-bold mb-3">星蚀灾难与星门</h3>
+                    <p class="text-gray-400 text-sm">前世纪爆发“星蚀”与晶化病，英雄迈克献身暂缓了危机。如今，人类发现晶石不仅提供能源，其内部交织的“时空经纬”更促成了“星门”的建立，开启了平行世界的探索。</p>
+                </div>
+                <div class="dynamic-card p-8 rounded-lg border-t-4 border-gray-500 gs-reveal">
+                    <i class="fas fa-globe-asia text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-xl font-bold mb-3">废土与绿境 (001 & 002)</h3>
+                    <p class="text-gray-400 text-sm">001“赤岩废土”因滥用晶石导致文明毁灭，满布毒尘；而002“绿境繁生”则因“数码种子”与“生命树脂”的发现，从冰冷钢铁化作建筑与绿植共生的生命奇迹。</p>
+                </div>
+                <div class="dynamic-card p-8 rounded-lg border-t-4 border-blue-500 gs-reveal">
+                    <i class="fas fa-shield-alt text-4xl text-blue-400 mb-4"></i>
+                    <h3 class="text-xl font-bold mb-3">暗晶入侵与共生</h3>
+                    <p class="text-gray-400 text-sm">003“暗晶神域”因能源枯竭走向掠夺，企图入侵尘界。最终各界联合，以生命树脂融合本源晶石创造出“绿晶”，净化了暗晶能量，签订了多元宇宙的共生盟约。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="characters" class="py-24 bg-black/50 relative z-10">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-4xl font-bold mb-4">核心角色档案</h2>
+            <div class="w-24 h-1 bg-blue-600 mx-auto mb-6"></div>
+            <p class="text-gray-400 mb-16">跨越不同维度的守护者，在多元宇宙中拼凑出生命的答案。</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto text-left">
+                <div class="dynamic-card rounded-xl overflow-hidden gs-reveal group border-b-4 border-blue-500">
+                    <div class="h-40 bg-gray-800 img-zoom-container relative">
+                        <img src="character/pic2.png" alt="Mike" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-blue-900/50 z-10"></div>
+                        <i class="fas fa-shield-halved text-4xl text-white absolute bottom-4 right-4 z-20 opacity-70"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-1 text-white">Mike</h3>
+                        <p class="text-blue-400 text-xs font-bold mb-2">前世纪英雄</p>
+                        <p class="text-gray-400 text-xs">在“星蚀”灾难爆发时，牺牲自己拯救了世界，为人类后续研究晶石争取了宝贵的时间。</p>
+                    </div>
+                </div>
+
+                <div class="dynamic-card rounded-xl overflow-hidden gs-reveal group border-b-4 border-orange-500">
+                    <div class="h-40 bg-gray-800 img-zoom-container relative">
+                        <img src="character/pic3.png" alt="Ember" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-orange-900/50 z-10"></div>
+                        <i class="fas fa-fire text-4xl text-white absolute bottom-4 right-4 z-20 opacity-70"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-1 text-white">Ember</h3>
+                        <p class="text-orange-400 text-xs font-bold mb-2">星巡队队长</p>
+                        <p class="text-gray-400 text-xs">前曙光营地首领，带领首批穿越者踏入星门，并在多元宇宙战争中指挥了最终防卫战。</p>
+                    </div>
+                </div>
+
+                <div class="dynamic-card rounded-xl overflow-hidden gs-reveal group border-b-4 border-yellow-400">
+                    <div class="h-40 bg-gray-800 img-zoom-container relative">
+                        <img src="character/pic4.png" alt="Firefly" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-yellow-900/50 z-10"></div>
+                        <i class="fas fa-lightbulb text-4xl text-white absolute bottom-4 right-4 z-20 opacity-70"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-1 text-white">Firefly</h3>
+                        <p class="text-yellow-400 text-xs font-bold mb-2">星巡队先锋</p>
+                        <p class="text-gray-400 text-xs">经验丰富的战士与科学家，携带着晶石能源设备，勇敢地在各个平行世界中执行探索任务。</p>
+                    </div>
+                </div>
+
+                <div class="dynamic-card rounded-xl overflow-hidden gs-reveal group border-b-4 border-pink-500">
+                    <div class="h-40 bg-gray-800 img-zoom-container relative">
+                        <img src="character/pic5.png" alt="Ellie" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-pink-900/50 z-10"></div>
+                        <i class="fas fa-bolt text-4xl text-white absolute bottom-4 right-4 z-20 opacity-70"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-1 text-white">Ellie</h3>
+                        <p class="text-pink-400 text-xs font-bold mb-2">星巡队骨干</p>
+                        <p class="text-gray-400 text-xs">带着对未知的敬畏记录着时空数据，与烬、小萤一起构成了星门探索计划的核心力量。</p>
+                    </div>
+                </div>
+
+                <div class="dynamic-card rounded-xl overflow-hidden gs-reveal group border-b-4 border-gray-400">
+                    <div class="h-40 bg-gray-800 img-zoom-container relative">
+                        <img src="character/pic6.png" alt="Kevin" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gray-700/50 z-10"></div>
+                        <i class="fas fa-user-shield text-4xl text-white absolute bottom-4 right-4 z-20 opacity-70"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-1 text-white">Kevin</h3>
+                        <p class="text-gray-300 text-xs font-bold mb-2">赤岩废土幸存者</p>
+                        <p class="text-gray-400 text-xs">001平行世界幸存者领袖。在毒尘中艰难求生，被救回后加入星巡队，成为探索异星的宝贵向导。</p>
+                    </div>
+                </div>
+
+                <div class="dynamic-card rounded-xl overflow-hidden gs-reveal group border-b-4 border-green-500">
+                    <div class="h-40 bg-gray-800 img-zoom-container relative">
+                        <img src="character/pic7.png" alt="Elara" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-green-900/50 z-10"></div>
+                        <i class="fas fa-leaf text-4xl text-white absolute bottom-4 right-4 z-20 opacity-70"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-1 text-white">Elara</h3>
+                        <p class="text-green-400 text-xs font-bold mb-2">绿境繁生首领</p>
+                        <p class="text-gray-400 text-xs">发现“数码种子”，成功将002平行世界的冰冷钢铁废墟，修复为生机勃勃的生命绿境。</p>
+                    </div>
+                </div>
+
+                <div class="dynamic-card rounded-xl overflow-hidden gs-reveal group border-b-4 border-yellow-500">
+                    <div class="h-40 bg-gray-800 img-zoom-container relative">
+                        <img src="character/pic8.png" alt="Jax" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-yellow-900/50 z-10"></div>
+                        <i class="fas fa-tree text-4xl text-white absolute bottom-4 right-4 z-20 opacity-70"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-1 text-white">Jax</h3>
+                        <p class="text-yellow-400 text-xs font-bold mb-2">绿境繁生首领</p>
+                        <p class="text-gray-400 text-xs">发现了延长生命的“生命树脂”。在对抗暗晶军团的危机中，他的树脂成为了合成“绿晶”的关键。</p>
+                    </div>
+                </div>
+
+                <div class="dynamic-card rounded-xl overflow-hidden gs-reveal group border-b-4 border-purple-800">
+                    <div class="h-40 bg-gray-800 img-zoom-container relative">
+                        <img src="character/pic9.png" alt="Dark" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-purple-900/60 z-10"></div>
+                        <i class="fas fa-skull text-4xl text-white absolute bottom-4 right-4 z-20 opacity-70"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-1 text-white">Dark</h3>
+                        <p class="text-purple-400 text-xs font-bold mb-2">暗晶军团首领</p>
+                        <p class="text-gray-400 text-xs">因003世界能源面临枯竭而走上掠夺之路。战败投降后，接受了绿晶的净化救赎，并签订了共生盟约。</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="timeline" class="py-24 relative z-10 overflow-hidden bg-gray-900/50">
+        <div class="container mx-auto px-4 relative">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl font-bold mb-4">大事件坐标</h2>
+                <div class="w-24 h-1 bg-yellow-500 mx-auto"></div>
+            </div>
+
+            <div class="relative max-w-5xl mx-auto">
+                <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-1 timeline-gradient z-0 shadow-[0_0_15px_rgba(155,89,182,0.8)]"></div>
+                <div class="md:hidden absolute left-4 h-full w-1 timeline-gradient z-0"></div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center w-full mb-16 relative z-10 gs-timeline">
+                    <div class="md:hidden absolute left-4 transform -translate-x-1/2 w-6 h-6 bg-purple-500 rounded-full border-4 border-gray-900 z-20"></div>
+                    <div class="hidden md:block w-[45%]"></div>
+                    <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 w-6 h-6 bg-purple-500 rounded-full border-4 border-gray-900 z-20 shadow-[0_0_15px_#a855f7]"></div>
+                    <div class="w-full pl-12 md:pl-0 md:w-[45%]">
+                        <div class="dynamic-card p-6 rounded-xl border-l-4 border-purple-500 shadow-lg relative bg-gray-900/80 backdrop-blur-md">
+                            <span class="text-purple-400 font-bold text-sm">前置纪元</span>
+                            <h3 class="text-xl font-bold my-2 text-white">星蚀灾难与英雄献身</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed">前世纪爆发“星蚀”灾难与晶化病，英雄迈克牺牲自我拯救世界。幸存的人类开始利用自然形成的晶石能量，维持晶核尘界的文明运转。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center w-full mb-16 relative z-10 gs-timeline">
+                    <div class="md:hidden absolute left-4 transform -translate-x-1/2 w-6 h-6 bg-yellow-500 rounded-full border-4 border-gray-900 z-20"></div>
+                    <div class="w-full pl-12 md:pl-0 md:w-[45%]">
+                        <div class="dynamic-card p-6 rounded-xl border-l-4 md:border-l md:border-r-4 border-yellow-500 md:text-right shadow-lg relative bg-gray-900/80 backdrop-blur-md">
+                            <span class="text-yellow-400 font-bold text-sm">探索开启</span>
+                            <h3 class="text-xl font-bold my-2 text-white">星门启航与废土救援</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed">科学家发掘出晶石内部的“时空经纬”，第一座星门落成。由 Ember 带领的星巡队首次踏入编号001“赤岩废土”，在毒尘中救回了以 Kevin 为首的幸存者，揭示了滥用晶石的代价。</p>
+                        </div>
+                    </div>
+                    <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 w-6 h-6 bg-yellow-500 rounded-full border-4 border-gray-900 z-20 shadow-[0_0_15px_#eab308]"></div>
+                    <div class="hidden md:block w-[45%]"></div>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center w-full mb-16 relative z-10 gs-timeline">
+                    <div class="md:hidden absolute left-4 transform -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full border-4 border-gray-900 z-20"></div>
+                    <div class="hidden md:block w-[45%]"></div>
+                    <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full border-4 border-gray-900 z-20 shadow-[0_0_15px_#3b82f6]"></div>
+                    <div class="w-full pl-12 md:pl-0 md:w-[45%]">
+                        <div class="dynamic-card p-6 rounded-xl border-l-4 border-blue-500 shadow-lg relative bg-gray-900/80 backdrop-blur-md">
+                            <span class="text-blue-400 font-bold text-sm">文明交汇</span>
+                            <h3 class="text-xl font-bold my-2 text-white">绿境结盟与暗晶入侵</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed">星巡队结识了002“绿境繁生”的 Elara 与 Jax，带回了生命树脂。然而，因能源枯竭而陷入疯狂的003“暗晶神域”首领 Dark 率军突袭，多界危机爆发。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center w-full mb-16 relative z-10 gs-timeline">
+                    <div class="md:hidden absolute left-4 transform -translate-x-1/2 w-6 h-6 bg-green-500 rounded-full border-4 border-gray-900 z-20"></div>
+                    <div class="w-full pl-12 md:pl-0 md:w-[45%]">
+                        <div class="dynamic-card p-6 rounded-xl border-l-4 md:border-l md:border-r-4 border-green-500 bg-green-900/20 md:text-right shadow-lg relative backdrop-blur-md">
+                            <span class="text-green-400 font-bold text-sm">当前节点</span>
+                            <h3 class="text-xl font-bold my-2 text-white">多元宇宙的终极防卫战</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed mb-4">Elara 与 Jax 带来生命树脂，与本源晶石融合出能净化腐蚀的“绿晶”。请进入互动游戏，加入星巡队，协助各界联手对抗暗晶军团，缔造宇宙共生盟约！</p>
+                            <a href="flora_awakening.html" class="inline-block px-5 py-2.5 bg-green-600 hover:bg-green-500 rounded-md text-white text-sm font-bold glow-green transition-colors duration-300 shadow-md">进入互动游戏 <i class="fas fa-arrow-right ml-1"></i></a>
+                        </div>
+                    </div>
+                    <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 w-6 h-6 bg-green-500 rounded-full border-4 border-gray-900 z-20 shadow-[0_0_15px_#22c55e]"></div>
+                    <div class="hidden md:block w-[45%]"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-black py-8 border-t border-white/10 relative z-10 text-center">
+        <div class="flex items-center justify-center space-x-2 mb-4 opacity-50">
+            <i class="fas fa-crystal text-purple-500"></i>
+            <span class="font-bold">晶核尘界：平行穿越录</span>
+        </div>
+        <p class="text-gray-600 text-sm">&copy; 2026 CIS132 Digital Storytelling. 保留所有权利。</p>
+    </footer>
 
     <script>
-        // 🌌 ★ 流星系统 ★
+        // 🌌 ★ 完美双层画布：包含修正后引流排斥力与无 Bug 流星 ★
         function initInteractiveStarfield() {
             const bgCanvas = document.getElementById('starfield');
             const bgCtx = bgCanvas.getContext('2d');
@@ -175,13 +409,11 @@
 
             function animate() {
                 bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-                bgCtx.fillStyle = 'rgba(10, 10, 15, 0.7)'; 
-                bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-
                 trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
 
                 let dx = targetMouseX - mouseX;
                 let dy = targetMouseY - mouseY;
+                
                 mouseX += dx * 0.2;
                 mouseY += dy * 0.2;
 
@@ -191,18 +423,23 @@
                 let offsetX = mouseX - bgCanvas.width / 2;
                 let offsetY = mouseY - bgCanvas.height / 2;
 
+                // 1. 绘制背景星空 (★ 已完美修复排斥力逻辑 ★)
                 stars.forEach(star => {
                     star.y += star.velocity; 
 
+                    // 计算渲染在萤幕上的真实位置
                     let drawX = star.x - offsetX * star.parallax;
                     let drawY = star.y - offsetY * star.parallax;
 
+                    // 使用真实的萤幕位置来计算距离，这样排斥力才准
                     let starDx = targetMouseX - drawX;
                     let starDy = targetMouseY - drawY;
                     let distance = Math.sqrt(starDx * starDx + starDy * starDy);
                     
+                    // 完美的排斥力效果
                     if (distance < 100) { 
                         let force = (100 - distance) / 100;
+                        // 注意这里修改的是原本星体的物理位置
                         star.x -= (starDx / distance) * force * 2;
                         star.y -= (starDy / distance) * force * 2;
                     }
@@ -220,6 +457,7 @@
                     bgCtx.fill();
                 });
 
+                // 2. 绘制流星轨迹 (★ 弃用 shadowBlur 解决浏览器 Bug ★)
                 trailCtx.lineCap = 'round';
                 trailCtx.lineJoin = 'round';
                 
@@ -249,6 +487,7 @@
                     trailCtx.stroke();
                 }
 
+                // 3. 绘制能量火花
                 let speed = Math.sqrt(dx*dx + dy*dy); 
                 if (speed > 3 && Math.random() < 0.6) {
                     sparks.push({
@@ -284,278 +523,37 @@
             animate();
         }
 
-        // --- 📖 视觉小说剧本与图库 ---
-        const chars = {
-            system: { name: '系统记录', color: 'bg-gray-600 border-gray-400' },
-            mike: { name: 'Mike', img: './character/pic2.png', color: 'border-blue-500 shadow-blue-500' },
-            ember: { name: 'Ember', img: './character/pic3.png', color: 'border-orange-500 shadow-orange-500' },
-            firefly: { name: 'Firefly', img: './character/pic4.png', color: 'border-yellow-400 shadow-yellow-400' },
-            ellie: { name: 'Ellie', img: './character/pic5.png', color: 'border-pink-500 shadow-pink-500' },
-            kevin: { name: 'Kevin', img: './character/pic6.png', color: 'border-gray-400 shadow-gray-400' },
-            elara: { name: 'Elara', img: './character/pic7.png', color: 'border-green-500 shadow-green-500' },
-            jax: { name: 'Jax', img: './character/pic8.png', color: 'border-teal-500 shadow-teal-500' },
-            dark: { name: 'Dark', img: './character/pic9.png', color: 'border-purple-800 shadow-purple-800' },
-            warning: { name: '系统警告', color: 'bg-red-700 border-red-400' }
-        };
+        // GSAP 动画触发
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.registerPlugin(ScrollTrigger);
+            
+            initInteractiveStarfield();
 
-        const storyNodes = [
-            {
-                scene: './character/scene1.png',
-                step: 1,
-                speaker: chars.system,
-                text: '前世纪“星蚀”爆发，英雄 Mike 牺牲自我拯救了世界。如今，科学家利用本源晶石中交织的“时空经纬”，落成了第一座“星门”，多元宇宙的探索正式启航...',
-                characters: [chars.mike]
-            },
-            {
-                scene: './character/scene2.png',
-                step: 2,
-                speaker: chars.system,
-                text: '星门开启！由 Ember、Firefly 和 Ellie 组成的星巡队跨越时空涟漪，抵达了编号001的“赤岩废土”。在这里，他们发现了呈现暗黑色、能量紊乱且带有腐蚀性的变异晶石。',
-                characters: [chars.ember, chars.firefly, chars.ellie] 
-            },
-            {
-                scene: './character/scene3.png',
-                step: 3,
-                speaker: chars.kevin,
-                text: '“别碰那些石头！它们会吞噬一切！” 废土幸存者领袖 Kevin 突然出现。他告诉星巡队，这个世界正是因为过度滥用晶石、科技失控，才导致了文明的彻底毁灭。',
-                characters: [chars.kevin, chars.firefly] 
-            },
-            {
-                scene: './character/scene4.png',
-                step: 4,
-                speaker: chars.system,
-                text: '带着001的警告，星巡队连接至002“绿境繁生”。在这个世界里，Elara 与 Jax 运用“数码种子”和“生命树脂”将冰冷的钢铁废墟化作了生机盎然的生命绿境。两界正式结成联盟。',
-                characters: [chars.elara, chars.jax]
-            },
-            {
-                scene: './character/scene5.png',
-                step: 5,
-                speaker: chars.ellie,
-                text: '“队长，仪器侦测到异常维度波动！” Ellie 看着屏幕。星门连接到了003“暗晶神域”。那是一个以掠夺晶石为生、将晶石武器化的极端文明，其首领 Dark 已经盯上了尘界的星门。',
-                characters: [chars.ellie, chars.dark]
-            },
-            {
-                scene: './character/scene6.png',
-                step: 6,
-                speaker: chars.warning,
-                text: '【系统最高警报：星门遭受高能暗晶攻击！】\nDark 率领暗晶军团突袭星巡队营地！强烈的腐蚀性能量正在撕裂时空屏障，多界文明危在旦夕！',
-                characters: [chars.dark],
-                shake: true
-            },
-            {
-                scene: './character/scene7.png',
-                step: 7,
-                speaker: chars.system,
-                text: '“我们还有希望！” Elara 与 Jax 及时赶到。他们发现生命树脂的能量可以中和暗晶的腐蚀性。结合星核尘界的本源晶石，他们成功研发出了能修复暗晶的“绿晶”！',
-                characters: [chars.elara, chars.jax]
-            },
-            {
-                scene: './character/scene8.png',
-                step: 8,
-                speaker: chars.ember,
-                text: '“全队注意！暗晶军团已突破外围防线！” Ember 拔出武器，转头看向你。“协调员，绿晶净化阵列已就绪，但强行启动有未知风险。请立即下达最终指令！”',
-                characters: [chars.ember],
-                shake: true, 
-                showChoices: true
-            }
-        ];
-
-        let currentNode = 0;
-        let typeInterval;
-
-        window.onload = () => { initInteractiveStarfield(); };
-
-        function startVisualNovel() {
-            gsap.to("#start-overlay", { opacity: 0, duration: 1, onComplete: () => {
-                document.getElementById("start-overlay").style.display = "none";
-                gsap.to("#vn-container", { opacity: 1, duration: 1 });
-                playNode(0);
-            }});
-        }
-
-        function playNode(index) {
-            if(index >= storyNodes.length) return;
-            currentNode = index;
-            const node = storyNodes[index];
-
-            const sceneLayer = document.getElementById('scene-layer');
-
-            gsap.to(sceneLayer, {
-                opacity: 0,
-                duration: 0.4,
-                onComplete: () => {
-                    if (node.scene) {
-                        sceneLayer.style.backgroundImage = `url('${node.scene}')`;
-                    } else {
-                        sceneLayer.style.backgroundImage = 'none';
-                    }
-                    gsap.to(sceneLayer, { opacity: 1, duration: 0.4 });
-                }
+            gsap.from('.title-anim', { opacity: 0, y: 30, duration: 1.2, stagger: 0.2, delay: 0.2 });
+            
+            gsap.to('.parallax-bg', {
+                scrollTrigger: { trigger: '.hero-section', start: 'top top', end: 'bottom top', scrub: true },
+                y: 200,
+                scale: 1.25,
+                transformOrigin: "center center"
             });
 
-            for(let i=1; i<=8; i++) {
-                let el = document.getElementById(`tl-${i}`);
-                if (!el) continue;
-                if(i < node.step) el.className = "text-xs font-bold text-gray-500 transition-all flex-shrink-0";
-                else if(i === node.step) el.className = "text-xs font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.9)] scale-110 transition-all flex-shrink-0";
-                else el.className = "text-xs font-bold text-gray-600 transition-all flex-shrink-0";
-                
-                if(i === node.step) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
-
-            const stage = document.getElementById('character-stage');
-            stage.innerHTML = ''; 
-            node.characters.forEach((c, idx) => {
-                let card = document.createElement('div');
-                card.className = `bg-gray-900/90 backdrop-blur-md border-2 ${c.color} p-2 md:p-3 rounded-xl flex flex-col items-center justify-center w-24 md:w-32 shadow-[0_0_15px_rgba(0,0,0,0.5)] transform translate-y-20 opacity-0`;
-                card.innerHTML = `
-                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-800 mb-2 border-2 ${c.color} overflow-hidden shadow-[0_0_10px_currentColor] flex items-center justify-center">
-                        <img src="${c.img}" alt="${c.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" class="w-full h-full object-cover">
-                        <i class="fas fa-image text-gray-600 text-2xl hidden"></i>
-                    </div>
-                    <div class="text-[11px] md:text-sm font-bold text-white text-center">${c.name}</div>
-                `;
-                stage.appendChild(card);
-                gsap.to(card, { y: 0, opacity: 1, duration: 0.8, delay: idx * 0.3, ease: "back.out(1.5)" });
-            });
-
-            const speakerBox = document.getElementById('speaker-name');
-            speakerBox.style.display = 'block';
-            speakerBox.className = `absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded shadow-[0_0_15px_rgba(0,0,0,0.5)] border ${node.speaker.color}`;
-            speakerBox.innerText = node.speaker.name;
-
-            if(node.shake) document.getElementById('vn-container').classList.add('shake-active');
-            else document.getElementById('vn-container').classList.remove('shake-active');
-
-            const textContainer = document.getElementById('dialogue-text');
-            textContainer.innerHTML = '';
-            textContainer.classList.add('cursor');
-            clearInterval(typeInterval);
-            
-            let charIndex = 0;
-            // ★ 修改了 typeWriter，支持回调函数
-            typeWriter(textContainer, node.text, () => {
-                if(node.showChoices) {
-                    document.getElementById('choices-container').classList.remove('hidden');
-                    document.getElementById('choices-container').classList.add('grid');
-                    gsap.from(".choice-btn", { y: 20, opacity: 0, duration: 0.5, stagger: 0.2 });
-                } else {
-                    setTimeout(() => playNode(currentNode + 1), 6000); 
-                }
-            });
-        }
-
-        // 🌟 打字机函数 (修改版：支持播放结束后执行动作)
-        function typeWriter(element, text, onComplete) {
-            element.innerHTML = '';
-            element.classList.add('cursor');
-            let i = 0;
-            let interval = setInterval(() => {
-                if(i < text.length) {
-                    element.innerHTML = text.substring(0, i + 1).replace(/\n/g, '<br>');
-                    i++;
-                } else {
-                    clearInterval(interval);
-                    element.classList.remove('cursor');
-                    if (onComplete) onComplete(); // 文字打完后执行回调
-                }
-            }, 45);
-        }
-
-        function makeChoice(type) {
-            document.getElementById('choices-container').classList.add('hidden');
-            document.getElementById('vn-container').classList.remove('shake-active');
-            document.getElementById('character-stage').innerHTML = ''; 
-            
-            const textContainer = document.getElementById('dialogue-text');
-            const speakerBox = document.getElementById('speaker-name');
-            const sceneLayer = document.getElementById('scene-layer');
-            const vnContainer = document.getElementById('vn-container');
-            
-            gsap.to(sceneLayer, { opacity: 0, duration: 0.5, onComplete: () => {
-                if (type === 'good') {
-                    sceneLayer.style.backgroundImage = "url('./character/end_good.png')";
-                    document.getElementById('visual-bg').style.background = "radial-gradient(circle at center, rgba(46,204,113,0.5) 0%, transparent 90%)";
-                    speakerBox.className = "absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded bg-green-700 border border-green-400 shadow-[0_0_15px_rgba(46,204,113,0.8)]";
-                    speakerBox.innerText = "结局达成";
-                    vnContainer.style.boxShadow = "0 0 50px rgba(46, 204, 113, 0.4)";
-                    
-                    // 文字播放完毕后，显示重新选择按钮
-                    typeWriter(textContainer, "【真结局：多元宇宙共生】\n\n你启动了绿晶阵列！生命树脂与本源晶石的光芒瞬间中和了暗晶的腐蚀。暗晶军团被感化，首领 Dark 宣布投降。战后，星核尘界帮助暗晶神域稳定了能源，三个平行世界签订了共生盟约。星门成为了多元宇宙交流的桥梁，文明迎来了真正的黎明！", () => {
-                        document.getElementById('restart-container').classList.remove('hidden');
-                    });
-                } else {
-                    sceneLayer.style.backgroundImage = "url('./character/end_bad.png')";
-                    document.getElementById('visual-bg').style.background = "radial-gradient(circle at center, rgba(231,76,60,0.5) 0%, transparent 90%)";
-                    speakerBox.className = "absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded bg-red-800 border border-red-500 shadow-[0_0_15px_rgba(231,76,60,0.8)]";
-                    speakerBox.innerText = "孤立结局";
-                    vnContainer.style.boxShadow = "0 0 50px rgba(231, 76, 60, 0.4)";
-                    
-                    // 文字播放完毕后，显示重新选择按钮
-                    typeWriter(textContainer, "【坏结局：尘界的孤岛】\n\n你选择了炸毁星门切断连接！强烈的时空坍塌将暗晶军团永远挡在了门外，但也彻底摧毁了探索平行宇宙的希望。能源枯竭的阴影依然笼罩着星核尘界，文明在孤立无援中，慢慢步入不可逆转的衰亡深渊...", () => {
-                        document.getElementById('restart-container').classList.remove('hidden');
-                    });
-                }
-                gsap.to(sceneLayer, { opacity: 1, duration: 0.5 });
-            }});
-        }
-
-        // 🌟 新增功能：时光倒流，返回第8章抉择时刻
-        function returnToChoices() {
-            // 隐藏返回按钮
-            document.getElementById('restart-container').classList.add('hidden');
-            
-            // 重新载入第8章的数据 (数组索引为 7)
-            const node = storyNodes[7];
-            currentNode = 7;
-            
-            const sceneLayer = document.getElementById('scene-layer');
-            const speakerBox = document.getElementById('speaker-name');
-            const textContainer = document.getElementById('dialogue-text');
-            const vnContainer = document.getElementById('vn-container');
-
-            // 还原背景与状态
-            gsap.to(sceneLayer, { opacity: 0, duration: 0.5, onComplete: () => {
-                sceneLayer.style.backgroundImage = `url('${node.scene}')`;
-                document.getElementById('visual-bg').style.background = "transparent";
-                vnContainer.style.boxShadow = "0 0 50px rgba(0,0,0,0.9)"; // 还原边框阴影
-
-                // 还原说话者
-                speakerBox.className = `absolute -top-5 left-8 px-5 py-1.5 text-sm font-bold rounded shadow-[0_0_15px_rgba(0,0,0,0.5)] border ${node.speaker.color}`;
-                speakerBox.innerText = node.speaker.name;
-
-                // 重新打字提示文字，打完后展示选项
-                typeWriter(textContainer, node.text, () => {
-                    document.getElementById('choices-container').classList.remove('hidden');
-                    document.getElementById('choices-container').classList.add('grid');
-                    gsap.from(".choice-btn", { y: 20, opacity: 0, duration: 0.5, stagger: 0.2 });
+            gsap.utils.toArray('.gs-reveal').forEach(card => {
+                gsap.from(card, {
+                    scrollTrigger: { trigger: card, start: "top 85%" },
+                    opacity: 0, y: 40, duration: 0.8, ease: "power2.out"
                 });
-
-                gsap.to(sceneLayer, { opacity: 1, duration: 0.5 });
-            }});
-
-            // 重新让 Ember 出场
-            const stage = document.getElementById('character-stage');
-            stage.innerHTML = '';
-            node.characters.forEach((c, idx) => {
-                let card = document.createElement('div');
-                card.className = `bg-gray-900/90 backdrop-blur-md border-2 ${c.color} p-2 md:p-3 rounded-xl flex flex-col items-center justify-center w-24 md:w-32 shadow-[0_0_15px_rgba(0,0,0,0.5)] transform translate-y-20 opacity-0`;
-                card.innerHTML = `
-                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-800 mb-2 border-2 ${c.color} overflow-hidden shadow-[0_0_10px_currentColor] flex items-center justify-center">
-                        <img src="${c.img}" alt="${c.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" class="w-full h-full object-cover">
-                        <i class="fas fa-image text-gray-600 text-2xl hidden"></i>
-                    </div>
-                    <div class="text-[11px] md:text-sm font-bold text-white text-center">${c.name}</div>
-                `;
-                stage.appendChild(card);
-                gsap.to(card, { y: 0, opacity: 1, duration: 0.8, delay: idx * 0.3, ease: "back.out(1.5)" });
             });
 
-            // 还原震动
-            if(node.shake) {
-                vnContainer.classList.add('shake-active');
-            }
-        }
+            gsap.utils.toArray('.gs-timeline').forEach((item, index) => {
+                let xOffset = index % 2 === 0 ? -50 : 50; 
+                if (window.innerWidth < 768) xOffset = -50; 
+                gsap.from(item, {
+                    scrollTrigger: { trigger: item, start: "top 85%" },
+                    opacity: 0, x: xOffset, duration: 0.8, ease: "power2.out"
+                });
+            });
+        });
     </script>
 </body>
 </html>
